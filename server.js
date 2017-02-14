@@ -9,8 +9,8 @@ var app = express()
 
 // conecta com o servidor do mongodb
 // connect to database
-mongoose.connect('mongodb://localhost/test')
-// mongoose.connect('mongodb://admin:radar@ds147079.mlab.com:47079/radarufladb')
+// mongoose.connect('mongodb://localhost/test')
+mongoose.connect('mongodb://admin:radar@ds147079.mlab.com:47079/radarufladb')
 
 console.log('Connected to mongoDB database.');
 
