@@ -57,10 +57,10 @@ app.post('/login', function (req, res) {
         // faz requisicao a DGTI
         models.User.findOne({ email: req.body.email, password: req.body.password  }, function (err, person) {
             if (err) {
-                return res.json(err)
+                return res.status(404).json(err)
             }
             else {
-                return res.status(404).json(person)
+                return res.json(person)
             }
         })
 
