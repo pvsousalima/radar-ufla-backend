@@ -10,7 +10,8 @@ var app = express()
 // conecta com o servidor do mongodb
 // connect to database
 // mongoose.connect('mongodb://localhost/test')
-mongoose.connect('mongodb://localhost/test')
+mongoose.connect('mongodb://admin:radar@ds147079.mlab.com:47079/radarufladb')
+
 console.log('Connected to mongoDB database.');
 
 // parser de application/json
@@ -32,9 +33,9 @@ var models = {
 }
 
 // creates a new user
-function createNewUser(user){
+function createNewUser(){
 
-    var newUser = new models.User({ email: 'pedro@computacao.ufla.br',  password: '123456' });
+    var newUser = new models.User({ email: 'neumar@dcc.ufla.br',  password: '123456' });
 
     newUser.save(function (err) {
         if (err) {
@@ -55,8 +56,11 @@ app.post('/login', function (req, res) {
 
         // faz requisicao a DGTI
         models.User.findOne({ email: req.body.email, password: req.body.password  }, function (err, person) {
-            if (err) return res.json(err);
-            res.json(person);
+            if (err) {
+                return res.json(err) }
+            else {
+                return res.status(404).json(person)
+            }
         })
 
     } else {
