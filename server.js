@@ -8,7 +8,10 @@ var bodyParser = require('body-parser')
 var app = express()
 
 // conecta com o servidor do mongodb
+// connect to database
+// mongoose.connect('mongodb://localhost/test')
 mongoose.connect('mongodb://localhost/test')
+console.log('Connected to mongoDB database.');
 
 // parser de application/json
 app.use(bodyParser.json())
@@ -25,7 +28,7 @@ var success_op = {
 
 // Models to access the collection on database
 var models = {
-    User: mongoose.model('User', { email: String, password: String })
+    User: mongoose.model('User', { email: String, nome: String, foto: String })
 }
 
 // creates a new user
@@ -67,6 +70,7 @@ app.put('/me', function (req, res) {
 
 
 var PORT = process.env.PORT || 8080
+
 app.listen(PORT, function() {
     console.log('Production Express server running at localhost:' + PORT)
 })

@@ -1,16 +1,10 @@
-Trabalho de Arquitetura II
+Trabalho de Computação em Núvem
 ================
-
-Integrantes
------------
-* ADSON MIGUEL GREGÓRIO
-* OTÁVIO DE FARIA OLIVEIRA
-* PEDRO VICTOR DE SOUSA LIMA
 
 Implantação
 -----------
-O trabalho foi hospedado na plataforma *heroku* e pode ser encontrado online [neste](https://arq2.herokuapp.com) link.
 
+O trabalho foi hospedado na plataforma *heroku*
 
 Como executar
 -------------
