@@ -46,7 +46,7 @@ function createNewUser(){
     });
 }
 
-createNewUser(null)
+// createNewUser(null)
 
 // login endpoint
 app.post('/login', function (req, res) {
