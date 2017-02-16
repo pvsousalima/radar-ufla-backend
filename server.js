@@ -9,9 +9,12 @@ var app = express()
 
 // conecta com o servidor do mongodb
 // connect to database
-// mongoose.connect('mongodb://localhost/test')
-mongoose.connect('mongodb://admin:radar@ds147079.mlab.com:47079/radarufladb')
 
+if (process.env.NODE_ENV = 'develop') {
+    mongoose.connect('mongodb://localhost/test')
+} else {
+    mongoose.connect('mongodb://admin:radar@ds147079.mlab.com:47079/radarufladb')
+}
 console.log('Connected to mongoDB database.');
 
 // parser de application/json
@@ -19,38 +22,20 @@ app.use(bodyParser.json())
 
 // sistema de erros
 var err_op = {
-    PARAMETROS_INVALIDOS: {message:'Os parametros fornecidos sao invalidos'}
+    PARAMETROS_INVALIDOS: {message:'Os parâmetros fornecidos são inválidos'},
+    NOT_UPDATED: {message:'O perfil não foi atualizado'}
 }
 
 // operacoes ok
 var success_op = {
-    USUARIO_AUTENTICADO: {message:'O usuario foi autenticado'}
+    USUARIO_AUTENTICADO: {message:'O usuário foi autenticado'},
+    UPDATED: {message:'O perfil foi atualizado'}
 }
 
 // Models to access the collection on database
 var models = {
     User: mongoose.model('User', { email: String, password: String, nome: String, foto: String, departamento: String, idade: Number })
 }
-
-// models.User.remove({}, function(){})
-
-// creates a new user
-function createNewUser(){
-
-    var userJSON = { email: 'neumar@dcc.ufla.br',  password: '123456', nome: "Neumar", idade: 25, departamento: "DCC" }
-
-    var newUser = new models.User(userJSON);
-
-    newUser.save(function (err) {
-        if (err) {
-            console.log(err);
-        } else {
-            console.log('user saved');
-        }
-    });
-}
-
-createNewUser(null)
 
 // login endpoint
 app.post('/login', function (req, res) {
@@ -73,9 +58,49 @@ app.post('/login', function (req, res) {
     }
 })
 
-app.put('/me', function (req, res) {
+// profile update endpoint
+app.put('/profile', function (req, res) {
+    updateProfile(req.body).then(function(updated){
+    res.json(success_op.UPDATED)
+    }).catch(function(err){
+        res.status(401).json(err_op.NOT_UPDATED)
+    })
 
 })
+
+// updates the profile
+function updateProfile(data) {
+    return new Promise(function(res, rej) {
+        models.User.findOneAndUpdate({'email': data.email }, data, {upsert:false}, function(err, doc){
+            if (err || doc === null) {
+                rej(false)
+            }
+            else {
+                res(true)
+            }
+        });
+    });
+}
+
+// models.User.remove({}, function(){})
+
+// creates a new user
+function createNewUser(){
+
+    var userJSON = { email: 'neumar@dcc.ufla.br',  password: '123456', nome: "Neumar", idade: 25, departamento: "DCC" }
+
+    var newUser = new models.User(userJSON);
+
+    newUser.save(function (err) {
+        if (err) {
+            console.log(err);
+        } else {
+            console.log('user saved');
+        }
+    });
+}
+
+// createNewUser(null)
 
 
 var PORT = process.env.PORT || 8080
