@@ -9,8 +9,8 @@ var app = express()
 
 // conecta com o servidor do mongodb
 // connect to database
-// mongoose.connect('mongodb://localhost/test')
-mongoose.connect('mongodb://admin:radar@ds147079.mlab.com:47079/radarufladb')
+mongoose.connect('mongodb://localhost/test')
+// mongoose.connect('mongodb://admin:radar@ds147079.mlab.com:47079/radarufladb')
 
 console.log('Connected to mongoDB database.');
 
@@ -29,13 +29,17 @@ var success_op = {
 
 // Models to access the collection on database
 var models = {
-    User: mongoose.model('User', { email: String, password: String, nome: String, foto: String })
+    User: mongoose.model('User', { email: String, password: String, nome: String, foto: String, departamento: String, idade: Number })
 }
+
+// models.User.remove({}, function(){})
 
 // creates a new user
 function createNewUser(){
 
-    var newUser = new models.User({ email: 'neumar@dcc.ufla.br',  password: '123456' });
+    var userJSON = { email: 'neumar@dcc.ufla.br',  password: '123456', nome: "Neumar", idade: 25, departamento: "DCC" }
+
+    var newUser = new models.User(userJSON);
 
     newUser.save(function (err) {
         if (err) {
@@ -46,7 +50,7 @@ function createNewUser(){
     });
 }
 
-// createNewUser(null)
+createNewUser(null)
 
 // login endpoint
 app.post('/login', function (req, res) {
