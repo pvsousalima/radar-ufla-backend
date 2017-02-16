@@ -86,11 +86,8 @@ function updateProfile(data) {
 
 // creates a new user
 function createNewUser(){
-
     var userJSON = { email: 'neumar@dcc.ufla.br',  password: '123456', nome: "Neumar", idade: 25, departamento: "DCC" }
-
     var newUser = new models.User(userJSON);
-
     newUser.save(function (err) {
         if (err) {
             console.log(err);
