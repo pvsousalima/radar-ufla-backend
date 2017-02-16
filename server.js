@@ -10,7 +10,7 @@ var app = express()
 // conecta com o servidor do mongodb
 // connect to database
 
-if (process.env.NODE_ENV = 'develop') {
+if (process.env.NODE_ENV === 'develop') {
     mongoose.connect('mongodb://localhost/test')
 } else {
     mongoose.connect('mongodb://admin:radar@ds147079.mlab.com:47079/radarufladb')
