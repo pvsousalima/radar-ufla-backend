@@ -10,6 +10,13 @@ var app = express()
 // conecta com o servidor do mongodb
 // connect to database
 
+// cors
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
+
 if (process.env.NODE_ENV === 'develop') {
     mongoose.connect('mongodb://localhost/test')
 } else {
@@ -23,7 +30,7 @@ app.use(bodyParser.json())
 // sistema de erros
 var err_op = {
     PARAMETROS_INVALIDOS: {message:'Os parâmetros fornecidos são inválidos'},
-    NOT_UPDATED: {message:'O perfil não foi atualizado'}
+    NOT_UPDATED: {updated: false, message:'O perfil não foi atualizado'}
 }
 
 // operacoes ok
@@ -36,6 +43,12 @@ var success_op = {
 var models = {
     User: mongoose.model('User', { email: String, password: String, nome: String, foto: String, departamento: String, idade: Number })
 }
+
+
+// login endpoint
+app.get('/', function (req, res) {
+    res.json({message:'ok'})
+})
 
 // login endpoint
 app.post('/login', function (req, res) {
@@ -61,7 +74,7 @@ app.post('/login', function (req, res) {
 // profile update endpoint
 app.put('/profile', function (req, res) {
     updateProfile(req.body).then(function(updated){
-    res.json(success_op.UPDATED)
+        res.json(updated)
     }).catch(function(err){
         res.status(401).json(err_op.NOT_UPDATED)
     })
@@ -75,9 +88,7 @@ function updateProfile(data) {
             if (err || doc === null) {
                 rej(false)
             }
-            else {
-                res(true)
-            }
+            res(true)
         });
     });
 }
@@ -85,9 +96,9 @@ function updateProfile(data) {
 // models.User.remove({}, function(){})
 
 // creates a new user
-function createNewUser(){
+function createNewUser(data){
     var userJSON = { email: 'neumar@dcc.ufla.br',  password: '123456', nome: "Neumar", idade: 25, departamento: "DCC" }
-    var newUser = new models.User(userJSON);
+    var newUser = new models.User(data);
     newUser.save(function (err) {
         if (err) {
             console.log(err);
