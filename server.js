@@ -53,9 +53,11 @@ var success_op = {
     UPDATED: {message: 'O perfil foi atualizado'}
 }
 
+
 // Models to access the collection on database
 var models = {
-    User: mongoose.model('User', { email: String, password: String, nome: String, categoria: String, foto: String, setor: String})
+    User: mongoose.model('User', { email: String, password: String, nome: String, categoria: String, foto: String, setor: String}),
+    Manifestacao: mongoose.model('Manifestacao', { tipo: String, assunto: String, descricao: String, anexo: String, id_usuario: String, likes: Number, dislikes: Number})
 }
 
 // login endpoint
@@ -77,6 +79,27 @@ app.post('/login', function (req, res) {
         res.json(err_op.PARAMETROS_INVALIDOS)
     }
 })
+
+// login endpoint
+app.post('/manifestacao', function (req, res) {
+
+    // check params
+    if(req.body.email && req.body.password){
+
+        // faz requisicao a DGTI
+        models.Manifestacao.findOne({ email: req.body.email, password: req.body.password  }, function (err, person) {
+            if (err) {
+                return res.status(404).json(err)
+            } else {
+                return res.json(person)
+            }
+        })
+
+    } else {
+        res.json(err_op.PARAMETROS_INVALIDOS)
+    }
+})
+
 
 // profile update endpoint
 app.put('/profile', function (req, res) {
@@ -101,16 +124,28 @@ function updateProfile(data) {
 }
 
 models.User.remove({}, function(){})
+models.Manifestacao.remove({}, function(){})
 
 // creates a new user
 function createNewUser(data){
-    // var userJSON = { email: 'neumar@dcc.ufla.br',  password: '123456', nome: "Neumar", idade: 25, departamento: "DCC" }
     var newUser = new models.User(data);
     newUser.save(function (err) {
         if (err) {
             console.log(err);
         } else {
             console.log('user saved');
+        }
+    });
+}
+
+// creates a new user
+function createNewManifestacao(data){
+    var newManifestacao = new models.Manifestacao(data);
+    newManifestacao.save(function (err) {
+        if (err) {
+            console.log(err);
+        } else {
+            console.log('manifestacao saved');
         }
     });
 }
@@ -124,8 +159,20 @@ createNewUser(
       "setor": "DCC",
       "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
     }
-
 )
+
+createNewManifestacao(
+    {
+        "tipo": "consulta",
+        "assunto": "este e o assunto",
+        "descricao": "esta e a descricao da manifestacao",
+        "anexo": "caminho do arquivo",
+        "id_usuario": "aslkjdf09f0sa",
+        "likes" : 0,
+        "dislikes" : 0
+    }
+)
+
 
 
 var PORT = process.env.PORT || 8080
