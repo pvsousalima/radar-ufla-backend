@@ -28,13 +28,13 @@ var options = {
   }
 }
 
-mongoose.connect('mongodb://localhost/test', options);
+// mongoose.connect('mongodb://localhost/test', options);
 
-// if (process.env.NODE_ENV === 'develop') {
-//     mongoose.connect('mongodb://localhost/test', options);
-// } else {
-//     mongoose.connect('mongodb://admin:radar@ds147079.mlab.com:47079/radarufladb', options)
-// }
+if (process.env.NODE_ENV === 'develop') {
+    mongoose.connect('mongodb://localhost/test', options);
+} else {
+    mongoose.connect('mongodb://admin:radar@ds147079.mlab.com:47079/radarufladb', options)
+}
 
 console.log('Connected to mongoDB database.');
 
