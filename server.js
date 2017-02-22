@@ -1,14 +1,14 @@
+
 var express = require('express')
 var path = require('path')
 var compression = require('compression')
-var mongoose = require('mongoose');
 var bodyParser = require('body-parser')
 
 // cria o app express
 var app = express()
 
-// conecta com o servidor do mongodb
-// connect to database
+// importa os modelos do mongodb
+var models = require('./models')
 
 // cors
 app.use(function(req, res, next) {
@@ -16,27 +16,6 @@ app.use(function(req, res, next) {
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
     next();
 });
-
-
-// connection options
-var options = {
-    server: {
-        socketOptions: {
-            socketTimeoutMS: 0,
-            connectTimeoutMS: 0
-        }
-    }
-}
-
-// mongoose.connect('mongodb://localhost/test', options);
-
-if (process.env.NODE_ENV === 'develop') {
-    mongoose.connect('mongodb://localhost/test', options);
-} else {
-    mongoose.connect('mongodb://admin:radar@ds147079.mlab.com:47079/radarufladb', options)
-}
-
-console.log('Connected to mongoDB database.');
 
 // parser de application/json
 app.use(bodyParser.json())
@@ -53,12 +32,6 @@ var success_op = {
     UPDATED: {message: 'O perfil foi atualizado'}
 }
 
-
-// Models to access the collection on database
-var models = {
-    User: mongoose.model('User', { email: String, password: String, nome: String, categoria: String, foto: String, setor: String}),
-    Manifestacao: mongoose.model('Manifestacao', { tipo: String, assunto: String, descricao: String, anexo: String, id_usuario: String, likes: Number, dislikes: Number})
-}
 
 // login endpoint
 app.post('/login', function (req, res) {
@@ -82,19 +55,8 @@ app.post('/login', function (req, res) {
 
 // login endpoint
 app.post('/manifestacao', function (req, res) {
-
-    // check params
     if(req.body.email && req.body.password){
-
-        // faz requisicao a DGTI
-        models.Manifestacao.findOne({ email: req.body.email, password: req.body.password  }, function (err, person) {
-            if (err) {
-                return res.status(404).json(err)
-            } else {
-                return res.json(person)
-            }
-        })
-
+        createNewManifestacao(req.body);
     } else {
         res.json(err_op.PARAMETROS_INVALIDOS)
     }
@@ -112,7 +74,7 @@ app.get('/manifestacao', function (req, res) {
 })
 
 
-// profile update endpoint
+// Endpoint de atualizacao do perfil do usuario
 app.put('/profile', function (req, res) {
     updateProfile(req.body).then(function(updated){
         res.json(updated)
@@ -122,10 +84,10 @@ app.put('/profile', function (req, res) {
 
 })
 
-// updates the profile
+// Funcao de atualizacao do perfil do usuario
 function updateProfile(data) {
     return new Promise(function(res, rej) {
-        models.User.findOneAndUpdate({'email': data.email }, data, {upsert:false}, function(err, doc){
+        models.User.findOneAndUpdate({'email': data.email, 'password':data.password }, data, {upsert:false}, function(err, doc){
             if (err || doc === null) {
                 rej(false)
             }
@@ -137,7 +99,7 @@ function updateProfile(data) {
 models.User.remove({}, function(){})
 models.Manifestacao.remove({}, function(){})
 
-// creates a new user
+// Cria um novo usuario no banco de dados
 function createNewUser(data){
     var newUser = new models.User(data);
     newUser.save(function (err) {
@@ -149,7 +111,7 @@ function createNewUser(data){
     });
 }
 
-// creates a new user
+// Cria uma nova manifestacao no banco de dados
 function createNewManifestacao(data){
     var newManifestacao = new models.Manifestacao(data);
     newManifestacao.save(function (err) {
@@ -185,7 +147,7 @@ createNewManifestacao(
 )
 
 
-
+// Inicia o servidor Node
 var PORT = process.env.PORT || 8080
 
 app.listen(PORT, function() {
