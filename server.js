@@ -17,11 +17,25 @@ app.use(function(req, res, next) {
   next();
 });
 
-if (process.env.NODE_ENV === 'develop') {
-    mongoose.connect('mongodb://localhost/test')
-} else {
-    mongoose.connect('mongodb://admin:radar@ds147079.mlab.com:47079/radarufladb')
+
+// connection options
+var options = {
+  server: {
+    socketOptions: {
+      socketTimeoutMS: 0,
+      connectTimeoutMS: 0
+    }
+  }
 }
+
+mongoose.connect('mongodb://localhost/test', options);
+
+// if (process.env.NODE_ENV === 'develop') {
+//     mongoose.connect('mongodb://localhost/test', options);
+// } else {
+//     mongoose.connect('mongodb://admin:radar@ds147079.mlab.com:47079/radarufladb', options)
+// }
+
 console.log('Connected to mongoDB database.');
 
 // parser de application/json
@@ -29,26 +43,20 @@ app.use(bodyParser.json())
 
 // sistema de erros
 var err_op = {
-    PARAMETROS_INVALIDOS: {message:'Os parâmetros fornecidos são inválidos'},
+    PARAMETROS_INVALIDOS: {message: 'Os parâmetros fornecidos são inválidos'},
     NOT_UPDATED: {updated: false, message:'O perfil não foi atualizado'}
 }
 
 // operacoes ok
 var success_op = {
-    USUARIO_AUTENTICADO: {message:'O usuário foi autenticado'},
-    UPDATED: {message:'O perfil foi atualizado'}
+    USUARIO_AUTENTICADO: {message: 'O usuário foi autenticado'},
+    UPDATED: {message: 'O perfil foi atualizado'}
 }
 
 // Models to access the collection on database
 var models = {
-    User: mongoose.model('User', { email: String, password: String, nome: String, foto: String, departamento: String, idade: Number })
+    User: mongoose.model('User', { email: String, password: String, nome: String, categoria: String, foto: String, setor: String})
 }
-
-
-// login endpoint
-app.get('/', function (req, res) {
-    res.json({message:'ok'})
-})
 
 // login endpoint
 app.post('/login', function (req, res) {
@@ -60,8 +68,7 @@ app.post('/login', function (req, res) {
         models.User.findOne({ email: req.body.email, password: req.body.password  }, function (err, person) {
             if (err) {
                 return res.status(404).json(err)
-            }
-            else {
+            } else {
                 return res.json(person)
             }
         })
@@ -93,11 +100,11 @@ function updateProfile(data) {
     });
 }
 
-// models.User.remove({}, function(){})
+models.User.remove({}, function(){})
 
 // creates a new user
 function createNewUser(data){
-    var userJSON = { email: 'neumar@dcc.ufla.br',  password: '123456', nome: "Neumar", idade: 25, departamento: "DCC" }
+    // var userJSON = { email: 'neumar@dcc.ufla.br',  password: '123456', nome: "Neumar", idade: 25, departamento: "DCC" }
     var newUser = new models.User(data);
     newUser.save(function (err) {
         if (err) {
@@ -108,7 +115,17 @@ function createNewUser(data){
     });
 }
 
-// createNewUser(null)
+createNewUser(
+    {
+      "email": "neumar@dcc.ufla.br",
+      "password": "123456",
+      "nome": "Neumar Malheiros",
+      "categoria": "professor",
+      "setor": "DCC",
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
+    }
+
+)
 
 
 var PORT = process.env.PORT || 8080
