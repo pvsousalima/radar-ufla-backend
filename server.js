@@ -12,20 +12,20 @@ var app = express()
 
 // cors
 app.use(function(req, res, next) {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-  next();
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    next();
 });
 
 
 // connection options
 var options = {
-  server: {
-    socketOptions: {
-      socketTimeoutMS: 0,
-      connectTimeoutMS: 0
+    server: {
+        socketOptions: {
+            socketTimeoutMS: 0,
+            connectTimeoutMS: 0
+        }
     }
-  }
 }
 
 // mongoose.connect('mongodb://localhost/test', options);
@@ -100,6 +100,17 @@ app.post('/manifestacao', function (req, res) {
     }
 })
 
+// login endpoint
+app.get('/manifestacao', function (req, res) {
+    models.Manifestacao.find({}, function (err, manifestacoes) {
+        if (err) {
+            return res.status(404).json(err)
+        } else {
+            return res.json(manifestacoes)
+        }
+    })
+})
+
 
 // profile update endpoint
 app.put('/profile', function (req, res) {
@@ -152,12 +163,12 @@ function createNewManifestacao(data){
 
 createNewUser(
     {
-      "email": "neumar@dcc.ufla.br",
-      "password": "123456",
-      "nome": "Neumar Malheiros",
-      "categoria": "professor",
-      "setor": "DCC",
-      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
+        "email": "neumar@dcc.ufla.br",
+        "password": "123456",
+        "nome": "Neumar Malheiros",
+        "categoria": "professor",
+        "setor": "DCC",
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
     }
 )
 
