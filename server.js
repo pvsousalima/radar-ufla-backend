@@ -12,7 +12,27 @@ var app = express()
 var models = require('./models')
 
 
+// jwt.verify('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYWRhIjoiZGFkYSIsImlhdCI6MTQ4NzgxMzQ3OCwiZXhwIjoxNDg3ODEzNTA4fQ.HLxnz-Z4R6rSmrX07pcPIi_fQEWdhWFC8sZ1PylKBOs', 'radar-ufla', function(err, decoded) {
+//   if (err) {
+//       console.log(err);
+//     /*
+//       err = {
+//         name: 'TokenExpiredError',
+//         message: 'jwt expired',
+//         expiredAt: 1408621000
+//       }
+//     */
+// } else {
+//     console.log('valid');
+// }
+// });
+
+
 app.set('superSecret', 'radar-ufla'); // secret variable
+
+// jwt.sign({dada:'dada'}, app.get('superSecret'), { expiresIn: 30, algorithm: 'HS256' }, function(err, token) {
+//     console.log(token);
+// })
 
 // cors
 app.use(function(req, res, next) {
@@ -39,24 +59,18 @@ var success_op = {
 
 // login endpoint
 app.post('/login', function (req, res) {
-
     // check params
     if(req.body.email && req.body.password){
-
         // faz requisicao a DGTI
         models.User.findOne({ email: req.body.email, password: req.body.password }, function (err, person) {
             if (err) {
                 return res.status(401).json(err)
             } else {
-
-                // gera o token de sessao para o usuario
-                generateToken(person.toJSON()).then((data) => {
+                generateToken(person.toJSON()).then((data) => { // gera o token de sessao para o usuario
                     return res.json(data)
                 })
-
             }
         })
-
     } else {
         res.status(401).json(err_op.PARAMETROS_INVALIDOS)
     }
@@ -73,7 +87,7 @@ app.post('/manifestacao', function (req, res) {
 
 // login endpoint
 app.get('/manifestacao', function (req, res) {
-    models.Manifestacao.find({}, function (err, manifestacoes) {
+    models.Manifestacao.find({}, (err, manifestacoes) => {
         if (err) {
             return res.status(404).json(err)
         } else {
@@ -85,7 +99,7 @@ app.get('/manifestacao', function (req, res) {
 
 // Endpoint de atualizacao do perfil do usuario
 app.put('/profile', function (req, res) {
-    updateProfile(req.body).then(function(updated){
+    updateProfile(req.body).then((updated) => {
         res.json(updated)
     }).catch(function(err){
         res.status(401).json(err_op.NOT_UPDATED)
@@ -99,19 +113,19 @@ models.Manifestacao.remove({}, function(){})
 // Cria um novo usuario no banco de dados
 function createNewUser(data){
     var newUser = new models.User(data);
-    newUser.save(function (err) {
+    newUser.save((err) => {
         if (err) {
-            console.log(err);
+            return false
         } else {
-            console.log('user saved');
+            return true
         }
     });
 }
 
 // gera um token para um dado usuario de forma assincrona
 function generateToken(person){
-    return new Promise(function(resolve, reject) {
-        jwt.sign(person, app.get('superSecret'), { expiresIn: 60 * 60 * 24, algorithm: 'HS256' }, function(err, token) {
+    return new Promise((resolve, reject) => {
+        jwt.sign(person, app.get('superSecret'), { expiresIn: 60 * 60 * 24, algorithm: 'HS256' }, (err, token) => {
             person.token = token
             resolve(person)
         })
@@ -120,8 +134,8 @@ function generateToken(person){
 
 // Funcao de atualizacao do perfil do usuario
 function updateProfile(data) {
-    return new Promise(function(res, rej) {
-        models.User.findOneAndUpdate({'email': data.email, 'password':data.password }, data, {upsert:false}, function(err, doc){
+    return new Promise((res, rej) => {
+        models.User.findOneAndUpdate({'email': data.email, 'password':data.password }, data, {upsert:false}, (err, doc) => {
             if (err || doc === null) {
                 rej(false)
             }
@@ -133,7 +147,7 @@ function updateProfile(data) {
 // Cria uma nova manifestacao no banco de dados
 function createNewManifestacao(data){
     var newManifestacao = new models.Manifestacao(data);
-    newManifestacao.save(function (err) {
+    newManifestacao.save((err) => {
         if (err) {
             console.log(err);
         } else {
@@ -169,6 +183,6 @@ createNewManifestacao(
 // Inicia o servidor Node
 var PORT = process.env.PORT || 8080
 
-app.listen(PORT, function() {
+app.listen(PORT, () => {
     console.log('Production Express server running at localhost:' + PORT)
 })
