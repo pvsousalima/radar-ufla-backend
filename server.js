@@ -46,21 +46,21 @@ app.use(bodyParser.json())
 
 // sistema de erros
 var err_op = {
-    PARAMETROS_INVALIDOS: {auth: false, message: 'Os parâmetros fornecidos são inválidos'},
-    DADOS_INCORRETOS: {auth: false, message: 'Dados incorretos.'},
-    NOT_UPDATED: {updated: false, message:'O perfil não foi atualizado'},
-    NOT_FOUND: {auth: false, message:'O usuário não foi encontrado.'}
+    PARAMETROS_INVALIDOS: {sucesso: false, message: 'Os parâmetros fornecidos são inválidos'},
+    DADOS_INCORRETOS: {sucesso: false, message: 'Dados incorretos.'},
+    NOT_UPDATED: {sucesso: false, message:'O perfil não foi atualizado'},
+    NOT_FOUND: {sucesso: false, message:'O usuário não foi encontrado.'},
+    MANIFESTACAO_NOT_FOUND: {sucesso: false, message:'Manifestação não foi encontrada.'}
 }
 
 // operacoes ok
 var success_op = {
-    USUARIO_AUTENTICADO: {auth: true, message: 'O usuário foi autenticado'},
-    MANIFESTACAO_CRIADA: {message: 'A manifestação foi criada'},
-
-    UPDATED: {message: 'O perfil foi atualizado'}
+    USUARIO_AUTENTICADO: {sucesso: true, message: 'O usuário foi autenticado'},
+    MANIFESTACAO_CRIADA: {sucesso:true, message: 'A manifestação foi criada'},
+    UPDATED: {sucesso:true, message: 'O perfil foi atualizado'}
 }
 
-// login endpoint
+// Endpoint para realizar a autenticacao e administracao de sessao dos usuarios
 app.post('/login', function (req, res) {
 
     // checa parametros
@@ -87,13 +87,6 @@ app.post('/login', function (req, res) {
 })
 
 
-// GET manifestacoes
-app.get('/manifestacao', (req, res) => {
-    models.Manifestacao.find({}, (err, manifestacoes) => {
-        err ? res.status(404).json(err) : res.json(manifestacoes)
-    })
-})
-
 // Metodo de protecao com token
 app.use((req, res, next)  => {
 
@@ -118,7 +111,7 @@ app.use((req, res, next)  => {
 
     // if there is no token
     // return an error
-    return res.status(403).send({
+    return res.status(401).send({
         auth: false,
         message: 'Token ausente.'
     });
@@ -126,21 +119,38 @@ app.use((req, res, next)  => {
   }
 });
 
-// Endpoint para criacao de uma nova manifestacao
+
+// Endpoint para retornar uma manifestacao especifica de acordo com o id
+app.get('/manifestacao/:id', (req, res) => {
+    getManifestacaoById(req).then((data) => {
+        res.json(data)
+    }).catch(err => {
+        res.status(404).json(err_op.MANIFESTACAO_NOT_FOUND)
+    })
+})
+
+// Endpoint para retornar uma lista de manifestacoes
+app.get('/manifestacao', (req, res) => {
+    models.Manifestacao.find({}, (err, manifestacoes) => {
+        err ? res.status(404).json(err) : res.json(manifestacoes)
+    })
+})
+
+// Endpoint para criar uma nova manifestacao
 app.post('/manifestacao', function (req, res) {
     createNewManifestacao(req).then((data) => {
         data ? res.json(data) : res.status(401).json(err_op.PARAMETROS_INVALIDOS)
     })
 })
 
-// Endpoint de atualizacao do perfil do usuario
+// Endpoint para atualizar o perfil do usuario
 app.put('/usuario', (req, res) => {
     atualizaPerfil(req).then((updated) => {
         updated ? res.json(updated) : res.status(401).json(err_op.NOT_UPDATED)
     })
 })
 
-// Pega o perfil do usuario
+// Endpoint para retornar o perfil de um usuario especifico de acordo com o id
 app.get('/usuario/:id', (req, res) => {
     getUsuario(req).then((usuario) => {
         usuario ? res.json(usuario) : res.status(404).json(err_op.NOT_FOUND)
@@ -149,7 +159,7 @@ app.get('/usuario/:id', (req, res) => {
     })
 })
 
-// Pega o perfil do usuario
+// Endpoint para retornar o perfil do usuario
 app.get('/usuario', (req, res) => {
     getUsuarioPerfil(req).then((usuario) => {
         usuario ? res.json(usuario) : res.status(404).json(err_op.NOT_FOUND)
@@ -158,6 +168,14 @@ app.get('/usuario', (req, res) => {
     })
 })
 
+// Funcao que retorna uma manifestacao de acordo com o id da mesma
+function getManifestacaoById(req){
+    return new Promise(function(resolve, reject) {
+        models.Manifestacao.find({"_id": req.params.id}, (err, manifestacao) => {
+            err ? reject(err) : resolve(manifestacao)
+        })
+    });
+}
 
 // Funcao para retornar o perfil do usuario
 function getUsuarioPerfil(req) {
@@ -177,10 +195,8 @@ function getUsuario(req) {
     });
 }
 
-// models.User.remove({}, function(){})
-// models.Manifestacao.remove({}, function(){})
 
-// Cria um novo usuario no banco de dados
+// Funcao para criar um novo usuario no banco de dados
 function createNewUser(data){
     var newUser = new models.User(data);
     newUser.save((err) => {
@@ -188,7 +204,7 @@ function createNewUser(data){
     });
 }
 
-// gera um token para um dado usuario de forma assincrona
+// Funcao para gerar um token para um dado usuario de forma assincrona
 function geraToken(person){
     return new Promise((resolve, reject) => {
         jwt.sign(person, app.get('superSecret'), { expiresIn: 60 * 60 * 24, algorithm: 'HS256' }, (err, token) => {
@@ -208,7 +224,7 @@ function atualizaPerfil(req) {
     });
 }
 
-// Cria uma nova manifestacao no banco de dados
+// Funcao de criacao de  uma nova manifestacao no banco de dados
 function createNewManifestacao(req) {
     return new Promise((resolve, reject) => {
         var newManifestacao = new models.Manifestacao(req.body);
