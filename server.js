@@ -47,78 +47,106 @@ app.use(bodyParser.json())
 // sistema de erros
 var err_op = {
     PARAMETROS_INVALIDOS: {auth: false, message: 'Os parâmetros fornecidos são inválidos'},
+    DADOS_INCORRETOS: {auth: false, message: 'Dados incorretos.'},
     NOT_UPDATED: {updated: false, message:'O perfil não foi atualizado'}
 }
 
 // operacoes ok
 var success_op = {
-    USUARIO_AUTENTICADO: {message: 'O usuário foi autenticado'},
+    USUARIO_AUTENTICADO: {auth: true, message: 'O usuário foi autenticado'},
+    MANIFESTACAO_CRIADA: {message: 'A manifestação foi criada'},
+
     UPDATED: {message: 'O perfil foi atualizado'}
 }
 
-
 // login endpoint
 app.post('/login', function (req, res) {
-    // check params
+
+    // checa parametros
     if(req.body.email && req.body.password){
-        // faz requisicao a DGTI
-        models.User.findOne({ email: req.body.email, password: req.body.password }, function (err, person) {
+
+        // faz "requisicao" à DGTI
+        models.User.findOne({ email: req.body.email, password: req.body.password }, (err, person) => {
             if (err) {
                 return res.status(401).json(err)
             } else {
-                generateToken(person.toJSON()).then((data) => { // gera o token de sessao para o usuario
-                    return res.json(data)
-                })
+                if(person){
+                    generateToken(person.toJSON()).then((data) => { // gera o token de sessao para o usuario
+                        return res.json(data)
+                    })
+                } else {
+                    return res.status(401).json(err_op.DADOS_INCORRETOS)
+                }
             }
         })
+
     } else {
         res.status(401).json(err_op.PARAMETROS_INVALIDOS)
     }
 })
 
-// login endpoint
-app.post('/manifestacao', function (req, res) {
-    if(req.body.email && req.body.password){
-        createNewManifestacao(req.body);
-    } else {
-        res.json(err_op.PARAMETROS_INVALIDOS)
-    }
-})
 
-// login endpoint
-app.get('/manifestacao', function (req, res) {
+// GET manifestacoes
+app.get('/manifestacao', (req, res) => {
     models.Manifestacao.find({}, (err, manifestacoes) => {
-        if (err) {
-            return res.status(404).json(err)
-        } else {
-            return res.json(manifestacoes)
-        }
+        err ? res.status(404).json(err) : res.json(manifestacoes)
     })
 })
 
+// Metodo de protecao com token
+app.use((req, res, next)  => {
+
+  // check header or url parameters or post parameters for token
+  var token = req.body.token || req.query.token || req.headers['x-access-token'];
+
+  // decode token
+  if (token) {
+
+    // verifies secret and checks exp
+    jwt.verify(token, app.get('superSecret'), function(err, decoded) {
+      if (err) {
+        return res.json({ success: false, message: 'Token inválido.' });
+      } else {
+        // if everything is good, save to request for use in other routes
+        req.decoded = decoded;
+        next();
+      }
+    });
+
+  } else {
+
+    // if there is no token
+    // return an error
+    return res.status(403).send({
+        auth: false,
+        message: 'Token ausente.'
+    });
+
+  }
+});
+
+// Endpoint para criacao de uma nova manifestacao
+app.post('/manifestacao', function (req, res) {
+    createNewManifestacao(req).then((data) => {
+        data ? res.json(data) : res.status(401).json(err_op.PARAMETROS_INVALIDOS)
+    })
+})
 
 // Endpoint de atualizacao do perfil do usuario
-app.put('/profile', function (req, res) {
-    updateProfile(req.body).then((updated) => {
-        res.json(updated)
-    }).catch(function(err){
-        res.status(401).json(err_op.NOT_UPDATED)
+app.put('/profile', (req, res) => {
+    updateProfile(req).then((updated) => {
+        updated ? res.json(updated) : res.status(401).json(err_op.NOT_UPDATED)
     })
-
 })
 
-models.User.remove({}, function(){})
-models.Manifestacao.remove({}, function(){})
+// models.User.remove({}, function(){})
+// models.Manifestacao.remove({}, function(){})
 
 // Cria um novo usuario no banco de dados
 function createNewUser(data){
     var newUser = new models.User(data);
     newUser.save((err) => {
-        if (err) {
-            return false
-        } else {
-            return true
-        }
+        return err ? false :  true
     });
 }
 
@@ -127,33 +155,30 @@ function generateToken(person){
     return new Promise((resolve, reject) => {
         jwt.sign(person, app.get('superSecret'), { expiresIn: 60 * 60 * 24, algorithm: 'HS256' }, (err, token) => {
             person.token = token
+            person.auth = true
             resolve(person)
         })
     });
 }
 
 // Funcao de atualizacao do perfil do usuario
-function updateProfile(data) {
-    return new Promise((res, rej) => {
-        models.User.findOneAndUpdate({'email': data.email, 'password':data.password }, data, {upsert:false}, (err, doc) => {
-            if (err || doc === null) {
-                rej(false)
-            }
-            res(true)
+function updateProfile(req) {
+    return new Promise((resolve, reject) => {
+        models.User.findOneAndUpdate( {'email': req.decoded.email, 'password':req.decoded.password }, req.body, {new: true, upsert:false}, (err, doc) => {
+            err || doc === null ? reject(null) : resolve(doc)
         });
     });
 }
 
 // Cria uma nova manifestacao no banco de dados
-function createNewManifestacao(data){
-    var newManifestacao = new models.Manifestacao(data);
-    newManifestacao.save((err) => {
-        if (err) {
-            console.log(err);
-        } else {
-            console.log('manifestacao saved');
-        }
-    });
+function createNewManifestacao(req) {
+    return new Promise((resolve, reject) => {
+        var newManifestacao = new models.Manifestacao(req.body);
+        newManifestacao.id_usuario = req.decoded._id
+        newManifestacao.save((err, manifestacao) => {
+            err ? reject(null) : resolve(manifestacao)
+        })
+    })
 }
 
 createNewUser(
@@ -167,17 +192,17 @@ createNewUser(
     }
 )
 
-createNewManifestacao(
-    {
-        "tipo": "consulta",
-        "assunto": "este e o assunto",
-        "descricao": "esta e a descricao da manifestacao",
-        "anexo": "caminho do arquivo",
-        "id_usuario": "aslkjdf09f0sa",
-        "likes" : 0,
-        "dislikes" : 0
-    }
-)
+// createNewManifestacao(
+//     {
+//         "tipo": "consulta",
+//         "assunto": "este e o assunto",
+//         "descricao": "esta e a descricao da manifestacao",
+//         "anexo": "caminho do arquivo",
+//         "id_usuario": "aslkjdf09f0sa",
+//         "likes" : 0,
+//         "dislikes" : 0,
+//     }
+// )
 
 
 // Inicia o servidor Node
