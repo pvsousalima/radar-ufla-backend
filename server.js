@@ -11,37 +11,18 @@ var app = express()
 // importa os modelos do mongodb
 var models = require('./models')
 
-
-// jwt.verify('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYWRhIjoiZGFkYSIsImlhdCI6MTQ4NzgxMzQ3OCwiZXhwIjoxNDg3ODEzNTA4fQ.HLxnz-Z4R6rSmrX07pcPIi_fQEWdhWFC8sZ1PylKBOs', 'radar-ufla', function(err, decoded) {
-//   if (err) {
-//       console.log(err);
-//     /*
-//       err = {
-//         name: 'TokenExpiredError',
-//         message: 'jwt expired',
-//         expiredAt: 1408621000
-//       }
-//     */
-// } else {
-//     console.log('valid');
-// }
-// });
-
-
+// seta a chave de segredo para geracao dos tokens
 app.set('superSecret', 'radar-ufla'); // secret variable
 
-// jwt.sign({dada:'dada'}, app.get('superSecret'), { expiresIn: 30, algorithm: 'HS256' }, function(err, token) {
-//     console.log(token);
-// })
-
 // cors
-app.use(function(req, res, next) {
+app.use((req, res, next) => {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
     next();
 });
 
-// parser de application/json
+// parser de body application/json
 app.use(bodyParser.json())
 
 // sistema de erros
@@ -61,7 +42,7 @@ var success_op = {
 }
 
 // Endpoint para realizar a autenticacao e administracao de sessao dos usuarios
-app.post('/login', function (req, res) {
+app.post('/login', (req, res) => {
 
     // checa parametros
     if(req.body.email && req.body.password){
@@ -97,7 +78,7 @@ app.use((req, res, next)  => {
   if (token) {
 
     // verifies secret and checks exp
-    jwt.verify(token, app.get('superSecret'), function(err, decoded) {
+    jwt.verify(token, app.get('superSecret'), (err, decoded) => {
       if (err) {
         return res.json({ success: false, message: 'Token inválido.' });
       } else {
@@ -137,7 +118,7 @@ app.get('/manifestacao', (req, res) => {
 })
 
 // Endpoint para criar uma nova manifestacao
-app.post('/manifestacao', function (req, res) {
+app.post('/manifestacao', (req, res)  => {
     createNewManifestacao(req).then((data) => {
         data ? res.json(data) : res.status(401).json(err_op.PARAMETROS_INVALIDOS)
     })
@@ -167,6 +148,18 @@ app.get('/usuario', (req, res) => {
         res.status(404).json(err_op.NOT_FOUND)
     })
 })
+
+
+// Endpoint para retornar o perfil do usuario
+app.get('/usuario', (req, res) => {
+    getUsuarioPerfil(req).then((usuario) => {
+        usuario ? res.json(usuario) : res.status(404).json(err_op.NOT_FOUND)
+    }).catch(err =>{
+        res.status(404).json(err_op.NOT_FOUND)
+    })
+})
+
+
 
 // Funcao que retorna uma manifestacao de acordo com o id da mesma
 function getManifestacaoById(req){
