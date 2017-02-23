@@ -48,7 +48,8 @@ app.use(bodyParser.json())
 var err_op = {
     PARAMETROS_INVALIDOS: {auth: false, message: 'Os parâmetros fornecidos são inválidos'},
     DADOS_INCORRETOS: {auth: false, message: 'Dados incorretos.'},
-    NOT_UPDATED: {updated: false, message:'O perfil não foi atualizado'}
+    NOT_UPDATED: {updated: false, message:'O perfil não foi atualizado'},
+    NOT_FOUND: {auth: false, message:'O usuário não foi encontrado.'}
 }
 
 // operacoes ok
@@ -71,7 +72,7 @@ app.post('/login', function (req, res) {
                 return res.status(401).json(err)
             } else {
                 if(person){
-                    generateToken(person.toJSON()).then((data) => { // gera o token de sessao para o usuario
+                    geraToken(person.toJSON()).then((data) => { // gera o token de sessao para o usuario
                         return res.json(data)
                     })
                 } else {
@@ -134,10 +135,30 @@ app.post('/manifestacao', function (req, res) {
 
 // Endpoint de atualizacao do perfil do usuario
 app.put('/profile', (req, res) => {
-    updateProfile(req).then((updated) => {
+    atualizaPerfil(req).then((updated) => {
         updated ? res.json(updated) : res.status(401).json(err_op.NOT_UPDATED)
     })
 })
+
+
+// Pega o perfil do usuario
+app.get('/usuario', (req, res) => {
+    getUsuario(req).then((usuario) => {
+        usuario ? res.json(usuario) : res.status(401).json(err_op.NOT_FOUND)
+    }).catch(err =>{
+        res.json(err_op.NOT_FOUND)
+    })
+})
+
+
+// Funcao para retornar o perfil do usuario
+function getUsuario(req) {
+    return new Promise((resolve, reject) => {
+        models.User.findOne( {'id': req.decoded.id}, (err, doc) => {
+            err || doc === null ? reject(null) : resolve(doc)
+        });
+    });
+}
 
 // models.User.remove({}, function(){})
 // models.Manifestacao.remove({}, function(){})
@@ -151,7 +172,7 @@ function createNewUser(data){
 }
 
 // gera um token para um dado usuario de forma assincrona
-function generateToken(person){
+function geraToken(person){
     return new Promise((resolve, reject) => {
         jwt.sign(person, app.get('superSecret'), { expiresIn: 60 * 60 * 24, algorithm: 'HS256' }, (err, token) => {
             person.token = token
@@ -162,7 +183,7 @@ function generateToken(person){
 }
 
 // Funcao de atualizacao do perfil do usuario
-function updateProfile(req) {
+function atualizaPerfil(req) {
     return new Promise((resolve, reject) => {
         models.User.findOneAndUpdate( {'email': req.decoded.email, 'password':req.decoded.password }, req.body, {new: true, upsert:false}, (err, doc) => {
             err || doc === null ? reject(null) : resolve(doc)
@@ -181,16 +202,16 @@ function createNewManifestacao(req) {
     })
 }
 
-createNewUser(
-    {
-        "email": "neumar@dcc.ufla.br",
-        "password": "123456",
-        "nome": "Neumar Malheiros",
-        "categoria": "professor",
-        "setor": "DCC",
-        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
-    }
-)
+// createNewUser(
+//     {
+//         "email": "neumar@dcc.ufla.br",
+//         "password": "123456",
+//         "nome": "Neumar Malheiros",
+//         "categoria": "professor",
+//         "setor": "DCC",
+//         "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
+//     }
+// )
 
 // createNewManifestacao(
 //     {
@@ -203,7 +224,6 @@ createNewUser(
 //         "dislikes" : 0,
 //     }
 // )
-
 
 // Inicia o servidor Node
 var PORT = process.env.PORT || 8080
