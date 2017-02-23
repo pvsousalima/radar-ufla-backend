@@ -4,9 +4,13 @@ var path = require('path')
 var compression = require('compression')
 var bodyParser = require('body-parser')
 var jwt = require('jsonwebtoken');
+var cors = require('cors')
+
 
 // cria o app express
 var app = express()
+
+app.use(cors()) //cors enable
 
 // importa os modelos do mongodb
 var models = require('./models')
@@ -15,12 +19,12 @@ var models = require('./models')
 app.set('superSecret', 'radar-ufla'); // secret variable
 
 // cors
-app.use((req, res, next) => {
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
-    next();
-});
+// app.use((req, res, next) => {
+//     res.header("Access-Control-Allow-Origin", "*");
+//     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+//     res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+//     next();
+// });
 
 // parser de body application/json
 app.use(bodyParser.json())
