@@ -134,27 +134,44 @@ app.post('/manifestacao', function (req, res) {
 })
 
 // Endpoint de atualizacao do perfil do usuario
-app.put('/profile', (req, res) => {
+app.put('/usuario', (req, res) => {
     atualizaPerfil(req).then((updated) => {
         updated ? res.json(updated) : res.status(401).json(err_op.NOT_UPDATED)
     })
 })
 
+// Pega o perfil do usuario
+app.get('/usuario/:id', (req, res) => {
+    getUsuario(req).then((usuario) => {
+        usuario ? res.json(usuario) : res.status(404).json(err_op.NOT_FOUND)
+    }).catch(err => {
+        res.status(404).json(err_op.NOT_FOUND)
+    })
+})
 
 // Pega o perfil do usuario
 app.get('/usuario', (req, res) => {
-    getUsuario(req).then((usuario) => {
-        usuario ? res.json(usuario) : res.status(401).json(err_op.NOT_FOUND)
+    getUsuarioPerfil(req).then((usuario) => {
+        usuario ? res.json(usuario) : res.status(404).json(err_op.NOT_FOUND)
     }).catch(err =>{
-        res.json(err_op.NOT_FOUND)
+        res.status(404).json(err_op.NOT_FOUND)
     })
 })
 
 
 // Funcao para retornar o perfil do usuario
-function getUsuario(req) {
+function getUsuarioPerfil(req) {
     return new Promise((resolve, reject) => {
         models.User.findOne( {'id': req.decoded.id}, (err, doc) => {
+            err || doc === null ? reject(null) : resolve(doc)
+        });
+    });
+}
+
+// Funcao para retornar um usuario
+function getUsuario(req) {
+    return new Promise((resolve, reject) => {
+        models.User.findOne( {'_id': req.params.id}, (err, doc) => {
             err || doc === null ? reject(null) : resolve(doc)
         });
     });
