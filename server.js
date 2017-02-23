@@ -3,12 +3,16 @@ var express = require('express')
 var path = require('path')
 var compression = require('compression')
 var bodyParser = require('body-parser')
+var jwt = require('jsonwebtoken');
 
 // cria o app express
 var app = express()
 
 // importa os modelos do mongodb
 var models = require('./models')
+
+
+app.set('superSecret', 'radar-ufla'); // secret variable
 
 // cors
 app.use(function(req, res, next) {
@@ -22,7 +26,7 @@ app.use(bodyParser.json())
 
 // sistema de erros
 var err_op = {
-    PARAMETROS_INVALIDOS: {message: 'Os parâmetros fornecidos são inválidos'},
+    PARAMETROS_INVALIDOS: {auth: false, message: 'Os parâmetros fornecidos são inválidos'},
     NOT_UPDATED: {updated: false, message:'O perfil não foi atualizado'}
 }
 
@@ -40,16 +44,21 @@ app.post('/login', function (req, res) {
     if(req.body.email && req.body.password){
 
         // faz requisicao a DGTI
-        models.User.findOne({ email: req.body.email, password: req.body.password  }, function (err, person) {
+        models.User.findOne({ email: req.body.email, password: req.body.password }, function (err, person) {
             if (err) {
-                return res.status(404).json(err)
+                return res.status(401).json(err)
             } else {
-                return res.json(person)
+
+                // gera o token de sessao para o usuario
+                generateToken(person.toJSON()).then((data) => {
+                    return res.json(data)
+                })
+
             }
         })
 
     } else {
-        res.json(err_op.PARAMETROS_INVALIDOS)
+        res.status(401).json(err_op.PARAMETROS_INVALIDOS)
     }
 })
 
@@ -84,18 +93,6 @@ app.put('/profile', function (req, res) {
 
 })
 
-// Funcao de atualizacao do perfil do usuario
-function updateProfile(data) {
-    return new Promise(function(res, rej) {
-        models.User.findOneAndUpdate({'email': data.email, 'password':data.password }, data, {upsert:false}, function(err, doc){
-            if (err || doc === null) {
-                rej(false)
-            }
-            res(true)
-        });
-    });
-}
-
 models.User.remove({}, function(){})
 models.Manifestacao.remove({}, function(){})
 
@@ -108,6 +105,28 @@ function createNewUser(data){
         } else {
             console.log('user saved');
         }
+    });
+}
+
+// gera um token para um dado usuario de forma assincrona
+function generateToken(person){
+    return new Promise(function(resolve, reject) {
+        jwt.sign(person, app.get('superSecret'), { expiresIn: 60 * 60 * 24, algorithm: 'HS256' }, function(err, token) {
+            person.token = token
+            resolve(person)
+        })
+    });
+}
+
+// Funcao de atualizacao do perfil do usuario
+function updateProfile(data) {
+    return new Promise(function(res, rej) {
+        models.User.findOneAndUpdate({'email': data.email, 'password':data.password }, data, {upsert:false}, function(err, doc){
+            if (err || doc === null) {
+                rej(false)
+            }
+            res(true)
+        });
     });
 }
 
