@@ -68,7 +68,7 @@ app.post('/login', (req, res) => {
 // Endpoint para cadastrar um novo usuario
 app.post('/usuario', (req, res) => {
     cadastraUsuarioByEmail(req).then((data) => {
-        res.json(data)
+        res.status(201).json(data)
     }).catch(err => {
         res.status(401).json(err_op.NOT_REGISTERED)
     })
