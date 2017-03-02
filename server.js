@@ -95,7 +95,7 @@ app.use((req, res, next)  => {
     // verifies secret and checks exp
     jwt.verify(token, app.get('superSecret'), (err, decoded) => {
       if (err) {
-        return res.json({ success: false, message: 'Token inválido.' });
+        return res.status(401).json({ success: false, message: 'Token inválido.' });
       } else {
         // if everything is good, save to request for use in other routes
         req.decoded = decoded;
@@ -159,7 +159,7 @@ app.get('/usuario/:id', (req, res) => {
 app.get('/usuario', (req, res) => {
     getUsuarioPerfil(req).then((usuario) => {
         usuario ? res.json(usuario) : res.status(404).json(err_op.NOT_FOUND)
-    }).catch(err =>{
+    }).catch(err => {
         res.status(404).json(err_op.NOT_FOUND)
     })
 })
@@ -173,7 +173,6 @@ app.get('/usuario', (req, res) => {
         res.status(404).json(err_op.NOT_FOUND)
     })
 })
-
 
 
 // Funcao que retorna uma manifestacao de acordo com o id da mesma
