@@ -18,31 +18,25 @@ var models = require('./models')
 // seta a chave de segredo para geracao dos tokens
 app.set('superSecret', 'radar-ufla'); // secret variable
 
-// cors
-// app.use((req, res, next) => {
-//     res.header("Access-Control-Allow-Origin", "*");
-//     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-//     res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
-//     next();
-// });
-
 // parser de body application/json
 app.use(bodyParser.json())
 
 // sistema de erros
 var err_op = {
-    PARAMETROS_INVALIDOS: {sucesso: false, message: 'Os parâmetros fornecidos são inválidos'},
+    PARAMETROS_INVALIDOS: {sucesso: false, message: 'Os parâmetros fornecidos são inválidos.'},
     DADOS_INCORRETOS: {sucesso: false, message: 'Dados incorretos.'},
-    NOT_UPDATED: {sucesso: false, message:'O perfil não foi atualizado'},
+    NOT_UPDATED: {sucesso: false, message:'O perfil não foi atualizado.'},
     NOT_FOUND: {sucesso: false, message:'O usuário não foi encontrado.'},
+    NOT_REGISTERED: {sucesso: false, message:'O usuário não foi cadastrado.'},
     MANIFESTACAO_NOT_FOUND: {sucesso: false, message:'Manifestação não foi encontrada.'}
 }
 
 // operacoes ok
 var success_op = {
-    USUARIO_AUTENTICADO: {sucesso: true, message: 'O usuário foi autenticado'},
-    MANIFESTACAO_CRIADA: {sucesso:true, message: 'A manifestação foi criada'},
-    UPDATED: {sucesso:true, message: 'O perfil foi atualizado'}
+    USUARIO_AUTENTICADO: {sucesso: true, message: 'O usuário foi autenticado.'},
+    USUARIO_CADASTRADO: {sucesso: true, message: 'O usuário foi cadastrado.'},
+    MANIFESTACAO_CRIADA: {sucesso:true, message: 'A manifestação foi criada.'},
+    UPDATED: {sucesso:true, message: 'O perfil foi atualizado.'}
 }
 
 // Endpoint para realizar a autenticacao e administracao de sessao dos usuarios
@@ -69,6 +63,23 @@ app.post('/login', (req, res) => {
     } else {
         res.status(401).json(err_op.PARAMETROS_INVALIDOS)
     }
+})
+
+// Endpoint para cadastrar um novo usuario
+app.post('/usuario', (req, res) => {
+    cadastraUsuarioByEmail(req).then((data) => {
+        res.json(data)
+    }).catch(err => {
+        res.status(401).json(err_op.NOT_REGISTERED)
+    })
+})
+
+
+// Endpoint para cadastrar um novo usuario
+app.get('/usuarios', (req, res) => {
+    models.User.find({}, (err, users) => {
+        err ? reject(err) : res.json(users)
+    })
 })
 
 
@@ -194,11 +205,24 @@ function getUsuario(req) {
 
 
 // Funcao para criar um novo usuario no banco de dados
-function createNewUser(data){
-    var newUser = new models.User(data);
-    newUser.save((err) => {
-        return err ? false :  true
-    });
+function cadastraUsuarioByEmail(req) {
+    return new Promise((resolve, reject) => {
+        models.User.findOne({email: req.body.email}, (err, user) => {
+            if(err){
+                reject(err)
+            } else {
+                user ? reject(user) : cadastraUsuario(req, resolve, reject)
+            }
+        })
+    })
+}
+
+// Salva o usuario no banco de dados
+function cadastraUsuario(req, resolve, reject) {
+    var novoUsuario = new models.User(req.body)
+    novoUsuario.save((err, usuario) => {
+        err ? reject(null) : resolve(usuario)
+    })
 }
 
 // Funcao para gerar um token para um dado usuario de forma assincrona
@@ -231,29 +255,6 @@ function createNewManifestacao(req) {
         })
     })
 }
-
-// createNewUser(
-//     {
-//         "email": "neumar@dcc.ufla.br",
-//         "password": "123456",
-//         "nome": "Neumar Malheiros",
-//         "categoria": "professor",
-//         "setor": "DCC",
-//         "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
-//     }
-// )
-
-// createNewManifestacao(
-//     {
-//         "tipo": "consulta",
-//         "assunto": "este e o assunto",
-//         "descricao": "esta e a descricao da manifestacao",
-//         "anexo": "caminho do arquivo",
-//         "id_usuario": "aslkjdf09f0sa",
-//         "likes" : 0,
-//         "dislikes" : 0,
-//     }
-// )
 
 // Inicia o servidor Node
 var PORT = process.env.PORT || 8080
