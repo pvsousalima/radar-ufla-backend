@@ -52,6 +52,7 @@ app.post('/login', (req, res) => {
             } else {
                 if(person){
                     geraToken(person.toJSON()).then((data) => { // gera o token de sessao para o usuario
+                        delete data.password
                         return res.json(data)
                     })
                 } else {
@@ -73,15 +74,6 @@ app.post('/usuario', (req, res) => {
         res.status(401).json(err_op.NOT_REGISTERED)
     })
 })
-
-
-// Endpoint para cadastrar um novo usuario
-app.get('/usuarios', (req, res) => {
-    models.User.find({}, (err, users) => {
-        err ? reject(err) : res.json(users)
-    })
-})
-
 
 // Metodo de protecao com token
 app.use((req, res, next)  => {
@@ -149,6 +141,7 @@ app.put('/usuario', (req, res) => {
 // Endpoint para retornar o perfil de um usuario especifico de acordo com o id
 app.get('/usuario/:id', (req, res) => {
     getUsuario(req).then((usuario) => {
+        delete usuario.password
         usuario ? res.json(usuario) : res.status(404).json(err_op.NOT_FOUND)
     }).catch(err => {
         res.status(404).json(err_op.NOT_FOUND)
@@ -158,6 +151,7 @@ app.get('/usuario/:id', (req, res) => {
 // Endpoint para retornar o perfil do usuario
 app.get('/usuario', (req, res) => {
     getUsuarioPerfil(req).then((usuario) => {
+        delete usuario.password
         usuario ? res.json(usuario) : res.status(404).json(err_op.NOT_FOUND)
     }).catch(err => {
         res.status(404).json(err_op.NOT_FOUND)
