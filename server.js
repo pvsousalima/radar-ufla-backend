@@ -131,6 +131,15 @@ app.post('/manifestacao', (req, res)  => {
     })
 })
 
+// Endpoint para criar um novo voto em uma determinada manifestacao
+app.post('/voto', (req, res)  => {
+    createNewVoto(req).then((data) => {
+        data ? res.json(data) : res.status(401).json(err_op.PARAMETROS_INVALIDOS)
+    }).catch(err => {
+        res.status(404).json(err_op.MANIFESTACAO_NOT_FOUND)
+    })
+})
+
 // Endpoint para atualizar o perfil do usuario
 app.put('/usuario', (req, res) => {
     atualizaPerfil(req).then((updated) => {
@@ -248,6 +257,31 @@ function createNewManifestacao(req) {
         })
     })
 }
+
+// Funcao de criacao de  uma nova manifestacao no banco de dados
+function createNewVoto(req) {
+    return new Promise((resolve, reject) => {
+
+        // Pega a manifestacao votada
+        models.Manifestacao.findOne({"_id": req.body.id}, (err, manifestacao) => {
+
+            if(err){
+                reject(err)
+            } else {
+
+                // Computa um like
+                manifestacao.likes += req.body.likes
+
+                // salva o dado com o voto computado
+                models.Manifestacao.findOneAndUpdate( {"_id": manifestacao.id}, manifestacao, {new: true, upsert:false}, (err, doc) => {
+                    err || doc === null ? reject(null) : resolve(doc)
+                })
+            }
+        })
+
+    })
+}
+
 
 // Inicia o servidor Node
 var PORT = process.env.PORT || 8080
