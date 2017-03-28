@@ -266,7 +266,9 @@ function createNewVoto(req) {
         models.Manifestacao.findOne({"_id": req.body.id}, (err, manifestacao) => {
 
             if(err){
+                
                 reject(err)
+
             } else {
 
                 // Computa um like
