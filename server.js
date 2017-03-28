@@ -270,7 +270,8 @@ function createNewVoto(req) {
             } else {
 
                 // Computa um like
-                manifestacao.likes += req.body.likes
+                manifestacao? manifestacao.likes += req.body.likes : reject(null)
+
 
                 // salva o dado com o voto computado
                 models.Manifestacao.findOneAndUpdate( {"_id": manifestacao.id}, manifestacao, {new: true, upsert:false}, (err, doc) => {
