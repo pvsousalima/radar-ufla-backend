@@ -3,7 +3,7 @@ var express = require('express')
 var path = require('path')
 var compression = require('compression')
 var bodyParser = require('body-parser')
-var jwt = require('jsonwebtoken');
+var jwt = require('jsonwebtoken')
 var cors = require('cors')
 
 
@@ -16,7 +16,7 @@ app.use(cors()) //cors enable
 var models = require('./models')
 
 // seta a chave de segredo para geracao dos tokens
-app.set('superSecret', 'radar-ufla'); // secret variable
+app.set('superSecret', 'radar-ufla') // secret variable
 
 // parser de body application/json
 app.use(bodyParser.json())
@@ -79,7 +79,7 @@ app.post('/usuario', (req, res) => {
 app.use((req, res, next)  => {
 
   // check header or url parameters or post parameters for token
-  var token = req.body.token || req.query.token || req.headers['x-access-token'];
+  var token = req.body.token || req.query.token || req.headers['x-access-token']
 
   // decode token
   if (token) {
@@ -87,13 +87,13 @@ app.use((req, res, next)  => {
     // verifies secret and checks exp
     jwt.verify(token, app.get('superSecret'), (err, decoded) => {
       if (err) {
-        return res.status(401).json({ success: false, message: 'Token inválido.' });
+        return res.status(401).json({ success: false, message: 'Token inválido.' })
       } else {
         // if everything is good, save to request for use in other routes
-        req.decoded = decoded;
-        next();
+        req.decoded = decoded
+        next()
       }
-    });
+    })
 
   } else {
 
@@ -102,10 +102,10 @@ app.use((req, res, next)  => {
     return res.status(401).send({
         auth: false,
         message: 'Token ausente.'
-    });
+    })
 
   }
-});
+})
 
 
 // Endpoint para retornar uma manifestacao especifica de acordo com o id
@@ -184,7 +184,7 @@ function getManifestacaoById(req){
         models.Manifestacao.find({"_id": req.params.id}, (err, manifestacao) => {
             err ? reject(err) : resolve(manifestacao)
         })
-    });
+    })
 }
 
 // Funcao para retornar o perfil do usuario
@@ -192,8 +192,8 @@ function getUsuarioPerfil(req) {
     return new Promise((resolve, reject) => {
         models.User.findOne( {'id': req.decoded.id}, (err, doc) => {
             err || doc === null ? reject(null) : resolve(doc)
-        });
-    });
+        })
+    })
 }
 
 // Funcao para retornar um usuario
@@ -201,8 +201,8 @@ function getUsuario(req) {
     return new Promise((resolve, reject) => {
         models.User.findOne( {'_id': req.params.id}, (err, doc) => {
             err || doc === null ? reject(null) : resolve(doc)
-        });
-    });
+        })
+    })
 }
 
 
@@ -235,7 +235,7 @@ function geraToken(person){
             person.auth = true
             resolve(person)
         })
-    });
+    })
 }
 
 // Funcao de atualizacao do perfil do usuario
@@ -243,14 +243,14 @@ function atualizaPerfil(req) {
     return new Promise((resolve, reject) => {
         models.User.findOneAndUpdate( {'email': req.decoded.email, 'password':req.decoded.password }, req.body, {new: true, upsert:false}, (err, doc) => {
             err || doc === null ? reject(null) : resolve(doc)
-        });
-    });
+        })
+    })
 }
 
 // Funcao de criacao de  uma nova manifestacao no banco de dados
 function createNewManifestacao(req) {
     return new Promise((resolve, reject) => {
-        var newManifestacao = new models.Manifestacao(req.body);
+        var newManifestacao = new models.Manifestacao(req.body)
         newManifestacao.id_usuario = req.decoded._id
         newManifestacao.save((err, manifestacao) => {
             err ? reject(null) : resolve(manifestacao)
@@ -260,7 +260,6 @@ function createNewManifestacao(req) {
 
 
 function updateManifestacaoVoto(manifestacao, req, resolve, reject){
-
     if(manifestacao){
 
         // Computa o voto
@@ -271,11 +270,10 @@ function updateManifestacaoVoto(manifestacao, req, resolve, reject){
         models.Manifestacao.findOneAndUpdate( {"_id": manifestacao.id}, manifestacao, {new: true, upsert:false}, (err, doc) => {
             err || doc === null ? reject(null) : resolve(doc)
         })
+
     } else {
         reject(null)
     }
-
-
 }
 
 // Funcao de criacao de  uma nova manifestacao no banco de dados
