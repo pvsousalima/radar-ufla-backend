@@ -258,6 +258,25 @@ function createNewManifestacao(req) {
     })
 }
 
+
+function updateManifestacao(manifestacao, req, resolve, reject){
+
+    if(manifestacao){
+
+        // Computa o voto
+        manifestacao.likes += req.body.likes
+
+        // salva o dado com o voto computado
+        models.Manifestacao.findOneAndUpdate( {"_id": manifestacao.id}, manifestacao, {new: true, upsert:false}, (err, doc) => {
+            err || doc === null ? reject(null) : resolve(doc)
+        })
+    } else {
+        reject(null)
+    }
+
+
+}
+
 // Funcao de criacao de  uma nova manifestacao no banco de dados
 function createNewVoto(req) {
     return new Promise((resolve, reject) => {
@@ -266,19 +285,13 @@ function createNewVoto(req) {
         models.Manifestacao.findOne({"_id": req.body.id}, (err, manifestacao) => {
 
             if(err){
-                
+
                 reject(err)
 
             } else {
 
-                // Computa um like
-                manifestacao? manifestacao.likes += req.body.likes : reject(null)
+                updateManifestacao(manifestacao,req, resolve, reject)
 
-
-                // salva o dado com o voto computado
-                models.Manifestacao.findOneAndUpdate( {"_id": manifestacao.id}, manifestacao, {new: true, upsert:false}, (err, doc) => {
-                    err || doc === null ? reject(null) : resolve(doc)
-                })
             }
         })
 
