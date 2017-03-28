@@ -259,12 +259,13 @@ function createNewManifestacao(req) {
 }
 
 
-function updateManifestacao(manifestacao, req, resolve, reject){
+function updateManifestacaoVoto(manifestacao, req, resolve, reject){
 
     if(manifestacao){
 
         // Computa o voto
         manifestacao.likes += req.body.likes
+        manifestacao.dislikes += req.body.dislikes
 
         // salva o dado com o voto computado
         models.Manifestacao.findOneAndUpdate( {"_id": manifestacao.id}, manifestacao, {new: true, upsert:false}, (err, doc) => {
@@ -290,7 +291,7 @@ function createNewVoto(req) {
 
             } else {
 
-                updateManifestacao(manifestacao,req, resolve, reject)
+                updateManifestacaoVoto(manifestacao,req, resolve, reject)
 
             }
         })
