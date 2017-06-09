@@ -6,7 +6,6 @@ var bodyParser = require('body-parser')
 var jwt = require('jsonwebtoken')
 var cors = require('cors')
 
-
 // cria o app express
 var app = express()
 
@@ -66,7 +65,37 @@ app.post('/login', (req, res) => {
     }
 })
 
-// Endpoint para cadastrar um novo usuario
+// Endpoint para realizar a autenticacao e administracao de sessao dos usuarios
+app.post('/login/facebook', (req, res) => {
+
+    // checa parametros
+    if(req.body.facebookId){
+
+        getUsuarioByFacebookId(req).then((user) => {
+            if(user){
+                geraToken(user.toJSON()).then((data) => { // gera o token de sessao para o usuario
+                    return res.json(data)
+                })
+            }
+        }).catch((err) => {
+
+            cadastraUsuarioByFacebook(req).then((user) => {
+                geraToken(user.toJSON()).then((data) => { // gera o token de sessao para o usuario
+                    return res.status(203).json(data)
+                })
+            }).catch((err) => {
+                res.send(err)
+            })
+
+        })
+
+    } else {
+        res.status(401).json(err_op.PARAMETROS_INVALIDOS)
+    }
+
+})
+
+// Endpoint para cadastrar um novo usuario por email
 app.post('/usuario', (req, res) => {
     cadastraUsuarioByEmail(req).then((data) => {
         res.status(201).json(data)
@@ -78,66 +107,33 @@ app.post('/usuario', (req, res) => {
 // Metodo de protecao com token
 app.use((req, res, next)  => {
 
-  // check header or url parameters or post parameters for token
-  var token = req.body.token || req.query.token || req.headers['x-access-token']
+    // check header or url parameters or post parameters for token
+    var token = req.body.token || req.query.token || req.headers['x-access-token']
 
-  // decode token
-  if (token) {
+    // decode token
+    if (token) {
 
-    // verifies secret and checks exp
-    jwt.verify(token, app.get('superSecret'), (err, decoded) => {
-      if (err) {
-        return res.status(401).json({ success: false, message: 'Token inválido.' })
-      } else {
-        // if everything is good, save to request for use in other routes
-        req.decoded = decoded
-        next()
-      }
-    })
+        // verifies secret and checks exp
+        jwt.verify(token, app.get('superSecret'), (err, decoded) => {
+            if (err) {
+                return res.status(401).json({ success: false, message: 'Token inválido.' })
+            } else {
+                // if everything is good, save to request for use in other routes
+                req.decoded = decoded
+                next()
+            }
+        })
 
-  } else {
+    } else {
 
-    // if there is no token
-    // return an error
-    return res.status(401).send({
-        auth: false,
-        message: 'Token ausente.'
-    })
+        // if there is no token
+        // return an error
+        return res.status(401).send({
+            auth: false,
+            message: 'Token ausente.'
+        })
 
-  }
-})
-
-
-// Endpoint para retornar uma manifestacao especifica de acordo com o id
-app.get('/manifestacao/:id', (req, res) => {
-    getManifestacaoById(req).then((data) => {
-        res.json(data)
-    }).catch(err => {
-        res.status(404).json(err_op.MANIFESTACAO_NOT_FOUND)
-    })
-})
-
-// Endpoint para retornar uma lista de manifestacoes
-app.get('/manifestacao', (req, res) => {
-    models.Manifestacao.find({}, (err, manifestacoes) => {
-        err ? res.status(404).json(err) : res.json(manifestacoes)
-    })
-})
-
-// Endpoint para criar uma nova manifestacao
-app.post('/manifestacao', (req, res)  => {
-    createNewManifestacao(req).then((data) => {
-        data ? res.json(data) : res.status(401).json(err_op.PARAMETROS_INVALIDOS)
-    })
-})
-
-// Endpoint para criar um novo voto em uma determinada manifestacao
-app.post('/voto', (req, res)  => {
-    createNewVoto(req).then((data) => {
-        data ? res.json(data) : res.status(401).json(err_op.PARAMETROS_INVALIDOS)
-    }).catch(err => {
-        res.status(404).json(err_op.MANIFESTACAO_NOT_FOUND)
-    })
+    }
 })
 
 // Endpoint para atualizar o perfil do usuario
@@ -147,16 +143,6 @@ app.put('/usuario', (req, res) => {
     })
 })
 
-// Endpoint para retornar o perfil de um usuario especifico de acordo com o id
-app.get('/usuario/:id', (req, res) => {
-    getUsuario(req).then((usuario) => {
-        delete usuario.password
-        usuario ? res.json(usuario) : res.status(404).json(err_op.NOT_FOUND)
-    }).catch(err => {
-        res.status(404).json(err_op.NOT_FOUND)
-    })
-})
-
 // Endpoint para retornar o perfil do usuario
 app.get('/usuario', (req, res) => {
     getUsuarioPerfil(req).then((usuario) => {
@@ -167,25 +153,6 @@ app.get('/usuario', (req, res) => {
     })
 })
 
-
-// Endpoint para retornar o perfil do usuario
-app.get('/usuario', (req, res) => {
-    getUsuarioPerfil(req).then((usuario) => {
-        usuario ? res.json(usuario) : res.status(404).json(err_op.NOT_FOUND)
-    }).catch(err =>{
-        res.status(404).json(err_op.NOT_FOUND)
-    })
-})
-
-
-// Funcao que retorna uma manifestacao de acordo com o id da mesma
-function getManifestacaoById(req){
-    return new Promise(function(resolve, reject) {
-        models.Manifestacao.find({"_id": req.params.id}, (err, manifestacao) => {
-            err ? reject(err) : resolve(manifestacao)
-        })
-    })
-}
 
 // Funcao para retornar o perfil do usuario
 function getUsuarioPerfil(req) {
@@ -205,11 +172,33 @@ function getUsuario(req) {
     })
 }
 
+// Funcao para retornar um usuario
+function getUsuarioByFacebookId(req) {
+    return new Promise((resolve, reject) => {
+        models.User.findOne( {'facebookId': req.body.facebookId}, (err, doc) => {
+            err || doc === null ? reject(null) : resolve(doc)
+        })
+    })
+}
+
 
 // Funcao para criar um novo usuario no banco de dados
 function cadastraUsuarioByEmail(req) {
     return new Promise((resolve, reject) => {
         models.User.findOne({email: req.body.email}, (err, user) => {
+            if(err){
+                reject(err)
+            } else {
+                user ? reject(user) : cadastraUsuario(req, resolve, reject)
+            }
+        })
+    })
+}
+
+// Funcao para criar um novo usuario no banco de dados via facebook
+function cadastraUsuarioByFacebook(req) {
+    return new Promise((resolve, reject) => {
+        models.User.findOne({facebookId: req.body.facebookId}, (err, user) => {
             if(err){
                 reject(err)
             } else {
@@ -230,9 +219,8 @@ function cadastraUsuario(req, resolve, reject) {
 // Funcao para gerar um token para um dado usuario de forma assincrona
 function geraToken(person){
     return new Promise((resolve, reject) => {
-        jwt.sign(person, app.get('superSecret'), { expiresIn: 60 * 60 * 24, algorithm: 'HS256' }, (err, token) => {
+        jwt.sign(person, app.get('superSecret'), { expiresIn: '1M', algorithm: 'HS256' }, (err, token) => {
             person.token = token
-            person.auth = true
             resolve(person)
         })
     })
@@ -247,59 +235,9 @@ function atualizaPerfil(req) {
     })
 }
 
-// Funcao de criacao de  uma nova manifestacao no banco de dados
-function createNewManifestacao(req) {
-    return new Promise((resolve, reject) => {
-        var newManifestacao = new models.Manifestacao(req.body)
-        newManifestacao.id_usuario = req.decoded._id
-        newManifestacao.save((err, manifestacao) => {
-            err ? reject(null) : resolve(manifestacao)
-        })
-    })
-}
-
-
-function updateManifestacaoVoto(manifestacao, req, resolve, reject){
-    if(manifestacao){
-
-        // Computa o voto
-        manifestacao.likes += req.body.likes
-        manifestacao.dislikes += req.body.dislikes
-
-        // salva o dado com o voto computado
-        models.Manifestacao.findOneAndUpdate( {"_id": manifestacao.id}, manifestacao, {new: true, upsert:false}, (err, doc) => {
-            err || doc === null ? reject(null) : resolve(doc)
-        })
-
-    } else {
-        reject(null)
-    }
-}
-
-// Funcao de criacao de  uma nova manifestacao no banco de dados
-function createNewVoto(req) {
-    return new Promise((resolve, reject) => {
-
-        // Pega a manifestacao votada
-        models.Manifestacao.findOne({"_id": req.body.id}, (err, manifestacao) => {
-
-            if(err){
-
-                reject(err)
-
-            } else {
-
-                updateManifestacaoVoto(manifestacao,req, resolve, reject)
-
-            }
-        })
-
-    })
-}
-
 
 // Inicia o servidor Node
-var PORT = process.env.PORT || 8080
+var PORT = process.env.PORT || 3000
 
 app.listen(PORT, () => {
     console.log('Production Express server running at localhost:' + PORT)
