@@ -153,12 +153,34 @@ app.get('/usuario', (req, res) => {
     })
 })
 
+// Endpoint para retornar uma base completa
+app.get('/carregaBase', (req, res) => {
+    getBase(req.query.base).then((base) => {
+        base ? res.json(base) : res.status(404).json(err_op.NOT_FOUND)
+    }).catch(err => {
+        res.status(404).json(err_op.NOT_FOUND)
+    })
+})
+
 
 // Funcao para retornar o perfil do usuario
 function getUsuarioPerfil(req) {
     return new Promise((resolve, reject) => {
         models.User.findOne( {'id': req.decoded.id}, (err, doc) => {
             err || doc === null ? reject(null) : resolve(doc)
+        })
+    })
+}
+
+// Retorna uma base
+function getBase(base){
+    return new Promise((resolve, reject) => {
+        models.User.find( {base: base}, (err, users) => {
+            if(err){
+                reject(err)
+            } else {
+                users ? resolve(users) : reject(users)
+            }
         })
     })
 }
@@ -219,12 +241,13 @@ function cadastraUsuario(req, resolve, reject) {
 // Funcao para gerar um token para um dado usuario de forma assincrona
 function geraToken(person){
     return new Promise((resolve, reject) => {
-        jwt.sign(person, app.get('superSecret'), { expiresIn: '1M', algorithm: 'HS256' }, (err, token) => {
+        jwt.sign(person, app.get('superSecret'), { expiresIn: '1Y', algorithm: 'HS256' }, (err, token) => {
             person.token = token
             resolve(person)
         })
     })
 }
+
 
 // Funcao de atualizacao do perfil do usuario
 function atualizaPerfil(req) {
