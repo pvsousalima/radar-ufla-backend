@@ -2,6 +2,7 @@
 var usuario = {
     titulo : String,
     endereco: String,
+    cidade: String,
     uf : String,
     cep : String,
     site : String,
