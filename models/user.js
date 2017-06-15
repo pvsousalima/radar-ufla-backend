@@ -1,11 +1,7 @@
 
 var usuario = {
     titulo : String,
-    rua : String,
-    numero : String,
-    complemento : String,
-    bairro : String,
-    cidade : String,
+    endereco: String,
     uf : String,
     cep : String,
     site : String,
