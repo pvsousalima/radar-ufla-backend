@@ -182,7 +182,7 @@ app.put('/atualizaUser', (req, res) => {
 })
 
 // Deleta um usuario
-app.put('/deletaUser', (req, res) => {
+app.delete('/deletaUser', (req, res) => {
     removeUsuario(req).then((response) => {
         response ? res.json(response) : res.status(404).json(err_op.NOT_FOUND)
     }).catch(err => {
