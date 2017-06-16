@@ -174,7 +174,7 @@ app.get('/carregaBaseNomes', (req, res) => {
 
 // Atualize um usuario
 app.put('/atualizaUser', (req, res) => {
-    atualizaPerfilAdmin(req.body).then((response) => {
+    atualizaPerfilAdmin(req).then((response) => {
         response ? res.json(response) : res.status(404).json(err_op.NOT_FOUND)
     }).catch(err => {
         res.status(404).json(err_op.NOT_FOUND)
