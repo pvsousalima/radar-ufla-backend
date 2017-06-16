@@ -183,7 +183,7 @@ function getUsuarioPerfil(req) {
 // Retorna uma base
 function getBase(base){
     return new Promise((resolve, reject) => {
-        models.User.find( {base: base}, (err, users) => {
+        models.User.find( base ? {base: base} : {}, (err, users) => {
             if(err){
                 reject(err)
             } else {
