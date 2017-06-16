@@ -14,6 +14,7 @@ var usuario = {
     imagem : String,
     ativo : Boolean,
     anunciante : Boolean,
+    tipoAnunciante: Number,
     base: String,
 }
 
