@@ -237,7 +237,7 @@ function getUsuario(req) {
 // Funcao para excluir um usuario
 function removeUsuario(req) {
     return new Promise((resolve, reject) => {
-        models.User.remove( {'_id': req.body.id}, (err, doc) => {
+        models.User.remove( {'_id': req.body._id}, (err, doc) => {
             err || doc === null ? reject(null) : resolve(doc)
         })
     })
