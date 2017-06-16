@@ -162,6 +162,14 @@ app.get('/carregaBase', (req, res) => {
     })
 })
 
+// Endpoint para retornar os nomes das bases
+app.get('/carregaBaseNomes', (req, res) => {
+    getBaseNomes().then((bases) => {
+        bases ? res.json(bases) : res.status(404).json(err_op.NOT_FOUND)
+    }).catch(err => {
+        res.status(404).json(err_op.NOT_FOUND)
+    })
+})
 
 // Funcao para retornar o perfil do usuario
 function getUsuarioPerfil(req) {
@@ -176,6 +184,19 @@ function getUsuarioPerfil(req) {
 function getBase(base){
     return new Promise((resolve, reject) => {
         models.User.find( {base: base}, (err, users) => {
+            if(err){
+                reject(err)
+            } else {
+                users ? resolve(users) : reject(users)
+            }
+        })
+    })
+}
+
+// Retorna nomes das bases
+function getBaseNomes(){
+    return new Promise((resolve, reject) => {
+        models.User.distinct('base', (err, users) => {
             if(err){
                 reject(err)
             } else {
