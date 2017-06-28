@@ -3,6 +3,7 @@ var usuario = {
     titulo : String,
     endereco: String,
     cidade: String,
+    estado: String,
     uf : String,
     cep : String,
     site : String,
