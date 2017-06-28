@@ -241,7 +241,7 @@ function getUserNameDisponivel(req){
             if(err){
                 reject(err)
             } else {
-                doc ? resolve({disponivel: false}) : reject({disponivel: true})
+                doc ? resolve({disponivel: false}) : resolve({disponivel: true})
             }
         })
     })
