@@ -162,6 +162,15 @@ app.get('/carregaBase', (req, res) => {
     })
 })
 
+// Endpoint para retornar se um email esta disponivel
+app.get('/checkUserName', (req, res) => {
+    getUserNameDisponivel(req).then((disponivel) => {
+        res.json(disponivel)
+    }).catch(err => {
+        res.status(404).json(err)
+    })
+})
+
 // Endpoint para retornar os nomes das bases
 app.get('/carregaBaseNomes', (req, res) => {
     getBaseNomes().then((bases) => {
@@ -220,6 +229,19 @@ function getBaseNomes(){
                 reject(err)
             } else {
                 users ? resolve(users) : reject(users)
+            }
+        })
+    })
+}
+
+// Retorna nomes das bases
+function getUserNameDisponivel(req){
+    return new Promise((resolve, reject) => {
+        models.User.findOne({'email': req.query.email}, (err, doc) => {
+            if(err){
+                reject(err)
+            } else {
+                doc ? resolve({disponivel: false}) : reject({disponivel: true})
             }
         })
     })
