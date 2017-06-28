@@ -282,7 +282,7 @@ function cadastraUsuarioByEmail(req) {
             if(err){
                 reject(err)
             } else {
-                user ? reject(user) : cadastraUsuario(req, resolve, reject)
+                user ? reject({code: 'ERRO', mensagem: 'Usuário já foi cadastrado!'}) : cadastraUsuario(req, resolve, reject)
             }
         })
     })
